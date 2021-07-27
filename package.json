@@ -14,7 +14,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "_copy_dir": "node -e \"require('fs-extra').copySync('./build/', './docs/')\"",
+    "build": "react-scripts build && npm run _copy_dir",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -37,5 +38,8 @@
     ]
   },
   "homepage": "https://standard-software.github.io/programmer-only-sns/",
+  "devDependencies": {
+    "fs-extra": "^9.1.0"
+  },
   "": ""
 }
