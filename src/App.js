@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
-import parts, { isUndefined, isNull, stringToDate, dateToString } from "@standard-software/parts"
+import parts, {
+  isUndefined, isNull, stringToDate, dateToString,
+  initialValue,
+} from "@standard-software/parts"
 const { subFirst, isFirst } = parts.string;
 
 const dateFormat = (dateText) => {
@@ -17,6 +20,28 @@ const getFetchData = async (url) => {
     result = data
   })
   return result;
+}
+
+const complementUserId = (shortId, userArray) => {
+  // console.log('complementUserId', { userArray, shortId });
+  const index = userArray.findIndex(user => isFirst(user.id, shortId))
+  // console.log({ userArray, shortId, index });
+  if (index === -1) {
+    return ''
+  } else {
+    return userArray[index].id
+  }
+}
+
+const complementTextId = (shortId, commentArray) => {
+  // console.log('complementTextId', { commentArray, shortId });
+  const index = commentArray.findIndex(comment => isFirst(comment.commentId, shortId))
+  // console.log({ commentArray, shortId, index });
+  if (index === -1) {
+    return ''
+  } else {
+    return commentArray[index].commentId
+  }
 }
 
 const App = () => {
@@ -37,18 +62,23 @@ const App = () => {
     for (const item of userData) {
       _userArray.push({...item});
     }
-    console.log({ _userArray });
+    // console.log({ _userArray });
     setUserArray(_userArray);
 
+    const _blockUserIds = localStorage.getItem('posns_block_user_ids');
+
+    const textAllURL =
+      'https://versatileapi.herokuapp.com/api/text/all/?$orderby=_created_at desc&$limit=5000' +
+      (
+        isNull(_blockUserIds) ? ''
+        : `&$filter=_user_id ne ` +
+          _blockUserIds.split(',')
+          .map(v=>`'${complementUserId(v, _userArray)}'`)
+          .join(' and _user_id ne ')
+      )
+
     const _commentArray = [];
-    const commentData = await getFetchData(
-      "https://versatileapi.herokuapp.com/api/text/all/?$orderby=_created_at desc&$limit=1000" +
-      "&$filter=" +
-      "_user_id ne 'd9ecf9245defb6b07cb86fe92a6fde9e735fc9f9'" +
-      // " and " +
-      // "_user_id ne 'xxxx'" +
-      ""
-    )
+    const commentData = await getFetchData(textAllURL)
     for (const item of commentData) {
       _commentArray.push({
         userName:
@@ -72,7 +102,7 @@ const App = () => {
       });
     }
 
-    console.log({ _commentArray });
+    // console.log({ _commentArray });
     _commentArray.reverse();
     return _commentArray;
   }
@@ -87,7 +117,7 @@ const App = () => {
     if (replyTextId !== '') {
       postData.in_reply_to_text_id = replyTextId
     }
-    console.log({postData})
+    // console.log({postData})
     const response = await fetch('https://versatileapi.herokuapp.com/api/text', {
       method: "POST",
       mode: "cors",
@@ -122,80 +152,6 @@ const App = () => {
     return response.json();
   }
 
-  const sleepByPromise = (sec) => {
-    return new Promise(resolve => setTimeout(resolve, sec*1000));
-  }
-
-  const getUserName = async () => {
-    let userData;
-    try {
-      userData = await getFetchData('https://versatileapi.herokuapp.com/api/user/all/');
-    } catch {
-      console.log('getUserName userData catch', userData);
-      await sleepByPromise(5);
-      return await getUserName();
-    }
-    console.log('getUserName 1', userData);
-
-    let postResult;
-    let postUserNameFlag1 = { isSuccess: false, counter: 0 }
-    while (postUserNameFlag1.isSuccess === false) {
-      try {
-        postResult = await postUserName('test', 'test');
-        postUserNameFlag1.isSuccess = true
-      } catch {
-        await sleepByPromise(5);
-        postUserNameFlag1.counter += 1;
-      }
-      if (postUserNameFlag1.counter >= 5) {
-        return;
-      }
-      console.log('getUserName 2', postResult);
-    }
-    const myUserId = postResult.id
-    const myUserItem = userData.find(userItem => userItem.id === myUserId);
-
-    let postUserNameFlag2 = { isSuccess: false, counter: 0 }
-    while (postUserNameFlag2.isSuccess === false) {
-      try {
-        await postUserName(myUserItem.name, myUserItem.description)
-        postUserNameFlag2.isSuccess = true
-      }
-      catch {
-        await sleepByPromise(5);
-        postUserNameFlag2.counter += 1;
-      }
-      if (postUserNameFlag2.counter >= 5) {
-        postUserNameFlag2.isSuccess = true;
-      }
-      console.log('getUserName 3', {myUserItem})
-    }
-
-    return myUserItem;
-  }
-
-  const complementUserId = (shortId) => {
-    console.log('complementUserId', { userArray, shortId });
-    const index = userArray.findIndex(user => isFirst(user.id, shortId))
-    console.log({ userArray, shortId, index });
-    if (index === -1) {
-      return ''
-    } else {
-      return userArray[index].id
-    }
-  }
-
-  const complementTextId = (shortId) => {
-    console.log('complementTextId', { commentArray, shortId });
-    const index = commentArray.findIndex(comment => isFirst(comment.commentId, shortId))
-    console.log({ commentArray, shortId, index });
-    if (index === -1) {
-      return ''
-    } else {
-      return commentArray[index].commentId
-    }
-  }
-
   const reloadComment = () => {
     (async () => {
       setCommentArray(await getCommentArray());
@@ -207,16 +163,11 @@ const App = () => {
     (async () => {
       setCommentArray(await getCommentArray());
 
-      let myUserItem = {
-        name: localStorage.getItem('posns_username'),
-        description: localStorage.getItem('posns_userdesc'),
+      const myUserItem = {
+        name: initialValue(localStorage.getItem('posns_username'), '', [null]),
+        description: initialValue(localStorage.getItem('posns_userdesc'), '', [null]),
       }
-      if (isNull(myUserItem.name)) {
-        myUserItem = await getUserName();
-        if (isUndefined(myUserItem)) { return; }
-        localStorage.setItem('posns_username', myUserItem.name);
-        localStorage.setItem('posns_userdesc', myUserItem.description);
-      }
+      // console.log({myUserItem})
       setInputUserName(myUserItem.name);
       setInputUserDescription(myUserItem.description)
     })();
@@ -292,15 +243,17 @@ const App = () => {
           <button onClick={async () => {
             if (inputText !== '') {
               const postTextResult = await postText(
-                inputText, complementUserId(inputReplyUserId), complementTextId(inputReplyTextId)
+                inputText,
+                complementUserId(inputReplyUserId, userArray),
+                complementTextId(inputReplyTextId, commentArray)
               );
-              console.log({postTextResult})
+              // console.log({postTextResult})
               setInputText('');
               setInputReplyUserId('');
               setInputReplyTextId('');
-              console.log('postText', inputText)
+              // console.log('postText', inputText)
             }
-            console.log('onClick before reloadComment', inputText)
+            // console.log('onClick before reloadComment', inputText)
             reloadComment()
           }}>書き込み/表示更新</button>
           <br />
@@ -316,12 +269,3 @@ const App = () => {
 }
 
 export default App;
-/**
- * なんかあとやれそうなこと
- * - ブロック用のユーザーIDをlocalStorageに登録してそこから指定を得るとユーザーごとにブロックをいれられる
- * - 返信用ユーザーUIを作れるかな
- * - スレッド表示対応
- * - スレッドへの返信機能
- * こんな実装予定
- */
-
