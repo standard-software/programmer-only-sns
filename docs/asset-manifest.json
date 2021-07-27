@@ -1,21 +1,21 @@
 {
   "files": {
-    "main.css": "/static/css/main.a617e044.chunk.css",
-    "main.js": "/static/js/main.f979eb29.chunk.js",
-    "main.js.map": "/static/js/main.f979eb29.chunk.js.map",
-    "runtime-main.js": "/static/js/runtime-main.4859f6c9.js",
-    "runtime-main.js.map": "/static/js/runtime-main.4859f6c9.js.map",
-    "static/js/2.409934c8.chunk.js": "/static/js/2.409934c8.chunk.js",
-    "static/js/2.409934c8.chunk.js.map": "/static/js/2.409934c8.chunk.js.map",
-    "static/js/3.a317c72d.chunk.js": "/static/js/3.a317c72d.chunk.js",
-    "static/js/3.a317c72d.chunk.js.map": "/static/js/3.a317c72d.chunk.js.map",
-    "index.html": "/index.html",
-    "static/css/main.a617e044.chunk.css.map": "/static/css/main.a617e044.chunk.css.map",
-    "static/js/2.409934c8.chunk.js.LICENSE.txt": "/static/js/2.409934c8.chunk.js.LICENSE.txt",
-    "static/media/logo.6ce24c58.svg": "./static/media/logo.6ce24c58.svg"
+    "main.css": "/programmer-only-sns/static/css/main.a617e044.chunk.css",
+    "main.js": "/programmer-only-sns/static/js/main.f979eb29.chunk.js",
+    "main.js.map": "/programmer-only-sns/static/js/main.f979eb29.chunk.js.map",
+    "runtime-main.js": "/programmer-only-sns/static/js/runtime-main.3fabb7c2.js",
+    "runtime-main.js.map": "/programmer-only-sns/static/js/runtime-main.3fabb7c2.js.map",
+    "static/js/2.409934c8.chunk.js": "/programmer-only-sns/static/js/2.409934c8.chunk.js",
+    "static/js/2.409934c8.chunk.js.map": "/programmer-only-sns/static/js/2.409934c8.chunk.js.map",
+    "static/js/3.a317c72d.chunk.js": "/programmer-only-sns/static/js/3.a317c72d.chunk.js",
+    "static/js/3.a317c72d.chunk.js.map": "/programmer-only-sns/static/js/3.a317c72d.chunk.js.map",
+    "index.html": "/programmer-only-sns/index.html",
+    "static/css/main.a617e044.chunk.css.map": "/programmer-only-sns/static/css/main.a617e044.chunk.css.map",
+    "static/js/2.409934c8.chunk.js.LICENSE.txt": "/programmer-only-sns/static/js/2.409934c8.chunk.js.LICENSE.txt",
+    "static/media/logo.6ce24c58.svg": "/programmer-only-sns/static/media/logo.6ce24c58.svg"
   },
   "entrypoints": [
-    "static/js/runtime-main.4859f6c9.js",
+    "static/js/runtime-main.3fabb7c2.js",
     "static/js/2.409934c8.chunk.js",
     "static/css/main.a617e044.chunk.css",
     "static/js/main.f979eb29.chunk.js"
