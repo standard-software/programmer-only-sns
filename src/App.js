@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import parts, {
   isUndefined, isNull, stringToDate, dateToString,
-  initialValue,
+  initialValue, sum,
 } from "@standard-software/parts"
 const { subFirst, isFirst } = parts.string;
 
@@ -54,16 +54,9 @@ const App = () => {
   const [inputReplyUserId, setInputReplyUserId] = useState('');
   const [inputReplyTextId, setInputReplyTextId] = useState('');
 
-  // console.log("App");
-
   const getCommentArray = async () => {
-    const _userArray = [];
     const userData = await getFetchData('https://versatileapi.herokuapp.com/api/user/all/');
-    for (const item of userData) {
-      _userArray.push({...item});
-    }
-    // console.log({ _userArray });
-    setUserArray(_userArray);
+    setUserArray(userData);
 
     const _blockUserIds = localStorage.getItem('posns_block_user_ids');
 
@@ -73,21 +66,26 @@ const App = () => {
         isNull(_blockUserIds) ? ''
         : `&$filter=_user_id ne ` +
           _blockUserIds.split(',')
-          .map(v=>`'${complementUserId(v, _userArray)}'`)
+          .map(v=>`'${complementUserId(v, userData)}'`)
           .join(' and _user_id ne ')
       )
 
+    const likeData = await getFetchData('https://versatileapi.herokuapp.com/api/like/all/');
+    // console.log({likeData})
+
     const _commentArray = [];
     const commentData = await getFetchData(textAllURL)
+    // console.log({commentData})
     for (const item of commentData) {
+      let likeCount = sum(likeData.filter(like => like.id === item.id).map(v => v.like_count))
       _commentArray.push({
         userName:
-          _userArray.find((user) => {
+        userData.find((user) => {
             return user.id === item._user_id;
           })?.name ?? "",
         replyToUserName:
           isUndefined(item.in_reply_to_user_id) ? '' :
-          _userArray.find((user) => {
+          userData.find((user) => {
             return user.id === item.in_reply_to_user_id;
           })?.name ?? "-",
         replyToTextId:
@@ -99,10 +97,11 @@ const App = () => {
         updatedAt: dateFormat(item._updated_at),
         commentId: item.id,
         text: item.text,
+        likeCount,
       });
     }
 
-    // console.log({ _commentArray });
+    console.log({ _commentArray });
     _commentArray.reverse();
     return _commentArray;
   }
@@ -163,6 +162,9 @@ const App = () => {
     (async () => {
       setCommentArray(await getCommentArray());
 
+      // // ブロックユーザーID指定
+      // localStorage.setItem('posns_block_user_ids', '2acaea0d5e,cce8bd6219');
+
       const myUserItem = {
         name: initialValue(localStorage.getItem('posns_username'), '', [null]),
         description: initialValue(localStorage.getItem('posns_userdesc'), '', [null]),
@@ -186,6 +188,7 @@ const App = () => {
                 ? `${comment.createdAt}`
                 : `${comment.createdAt}|${comment.updatedAt}`}
               {`[${subFirst(comment.commentId, 8)}]`}
+              {`${comment.likeCount !== 0 ? ' Like:' + comment.likeCount : ''}`}
               <br />
               {`${comment.userName} [${subFirst(comment.userId, 10)}] `}
               <br />
@@ -195,7 +198,7 @@ const App = () => {
                 : comment.replyToUserName === '' ? <>{`REPLY:${comment.replyToTextId}`}<br /></>
                 : <>{`TO:${comment.replyToUserName} REPLY:${comment.replyToTextId}`}<br /></>
               }
-              {comment.text.split(/(\n)/).map(v => v === '\n' ? <br /> : v)}
+              {comment.text}
               <hr />
             </div>
           );
