@@ -192,7 +192,10 @@ const App = () => {
         : comment.replyToUserName === '' ? <>{`REPLY:${comment.replyToTextId}`}<br /></>
         : <>{`TO:${comment.replyToUserName} REPLY:${comment.replyToTextId}`}<br /></>
       }
-      {comment.text}
+      {/* {comment.text} */}
+
+      {comment.text.split(/(\n)/).map((v, i) => v === '\n' ? <br key={i} /> : v)}
+
     </>
   }
 
