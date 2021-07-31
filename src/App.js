@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import marked from 'marked';
 import parts, {
   isUndefined, isNull, stringToDate, dateToString,
   initialValue, sum,
@@ -203,7 +204,13 @@ const App = () => {
         : comment.replyToUserName === '' ? <>{`REPLY:${comment.replyToTextId}`}<br /></>
         : <>{`TO:${comment.replyToUserName} REPLY:${comment.replyToTextId}`}<br /></>
       }
-      {comment.text.split(/(\n)/).map((v, i) => v === '\n' ? <br key={i} /> : v)}
+      <div dangerouslySetInnerHTML={
+        {
+          __html: marked(
+            comment.text.replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+          )
+        }
+      } />
 
       {comment.imageBase64Array.length === 0 ? null :
         <>
