@@ -205,82 +205,58 @@ const App = () => {
       isUndefined(commentArray.find(c => c.commentId === comment._replyToTextId))
   });
 
-  // 多段階のスレッド表示階層
-  for (const item1 of viewCommentArray) {
-    item1.childComment = commentArray.filter(c => c._replyToTextId === item1.commentId)
-    for (const item2 of item1.childComment) {
-      item2.childComment = commentArray.filter(c => c._replyToTextId === item2.commentId)
-      for (const item3 of item2.childComment) {
-        item3.childComment = commentArray.filter(c => c._replyToTextId === item3.commentId)
-        for (const item4 of item3.childComment) {
-          item4.childComment = commentArray.filter(c => c._replyToTextId === item4.commentId)
-          for (const item5 of item4.childComment) {
-            item5.childComment = commentArray.filter(c => c._replyToTextId === item5.commentId)
-          }
-        }
+  // // 多段階のスレッド表示階層
+  // for (const item1 of viewCommentArray) {
+  //   item1.childComment = commentArray.filter(c => c._replyToTextId === item1.commentId)
+  //   for (const item2 of item1.childComment) {
+  //     item2.childComment = commentArray.filter(c => c._replyToTextId === item2.commentId)
+  //     for (const item3 of item2.childComment) {
+  //       item3.childComment = commentArray.filter(c => c._replyToTextId === item3.commentId)
+  //       for (const item4 of item3.childComment) {
+  //         item4.childComment = commentArray.filter(c => c._replyToTextId === item4.commentId)
+  //         for (const item5 of item4.childComment) {
+  //           item5.childComment = commentArray.filter(c => c._replyToTextId === item5.commentId)
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+  // console.log({viewCommentArray})
+
+  const setChildComment = (targetCommentArray, level = 0) => {
+    for (const item of targetCommentArray) {
+      item.childComment = commentArray.filter(c => c._replyToTextId === item.commentId);
+      item.level = level;
+      if (1 <= item.childComment.length) {
+        setChildComment(item.childComment, level + 1);
       }
     }
   }
-  // console.log({viewCommentArray})
+  setChildComment(viewCommentArray)
+
+  const outputChildComment = (targetCommentArray) => {
+    const result = (<>
+      {
+        targetCommentArray.map((comment, i) => {
+          return (
+            <div key={comment.commentId} style={{ marginLeft: `${comment.level * 15}px` }}>
+                {commentOutput(comment)}
+                <hr />
+                {1 <= comment.childComment.length ? outputChildComment( comment.childComment) : null}
+            </div>
+          )
+        })
+      }
+    </>)
+    return result;
+  }
 
   return (
     <div className="App">
       <header className="App-header">
 
       <div>
-        {viewCommentArray.map((comment, i) => {
-          // console.log(comment.userName);
-          return (
-            <div key={comment.commentId}>
-              {commentOutput(comment)}
-
-              {comment.childComment.map(comment => {
-                return (
-                  <div key={comment.commentId} style={{ marginLeft: '20px' }}>
-                    {commentOutput(comment)}
-
-                    {comment.childComment.map(comment => {
-                      return (
-                        <div key={comment.commentId} style={{ marginLeft: '40px' }}>
-                          {commentOutput(comment)}
-
-                          {comment.childComment.map(comment => {
-                            return (
-                              <div key={comment.commentId} style={{ marginLeft: '60px' }}>
-                                {commentOutput(comment)}
-
-                                {comment.childComment.map(comment => {
-                                  return (
-                                    <div key={comment.commentId} style={{ marginLeft: '80px' }}>
-                                      {commentOutput(comment)}
-
-                                      {comment.childComment.map(comment => {
-                                        return (
-                                          <div key={comment.commentId} style={{ marginLeft: '100px' }}>
-                                            {commentOutput(comment)}
-                                          </div>
-                                        )
-                                      })}
-
-
-                                    </div>
-                                  )
-                                })}
-
-                              </div>
-                            )
-                          })}
-
-                        </div>
-                      )
-                    })}
-                  </div>
-                )
-              })}
-              <hr />
-            </div>
-          );
-        })}
+        {outputChildComment(viewCommentArray)}
 
         <div>
           <input type="text" value={inputUserName}
