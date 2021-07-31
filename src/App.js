@@ -70,14 +70,23 @@ const App = () => {
           .join(' and _user_id ne ')
       )
 
-    const likeData = await getFetchData('https://versatileapi.herokuapp.com/api/like/all/');
+    const likeData = await getFetchData(
+      'https://versatileapi.herokuapp.com/api/like/all/'
+    );
     // console.log({likeData})
+
+    const imageData = await getFetchData(
+      'https://versatileapi.herokuapp.com/api/image/all/'
+    );
+    // console.log({imageData})
 
     let _commentArray = [];
     const commentData = await getFetchData(textAllURL)
     // console.log({commentData})
     for (const item of commentData) {
       let likeCount = sum(likeData.filter(like => like.id === item.id).map(v => v.like_count))
+      let imageBase64Array = imageData.filter(image => image.bind_text_id === item.id).map(v => v.base64)
+
       _commentArray.push({
         userName:
         userData.find((user) => {
@@ -100,10 +109,12 @@ const App = () => {
         text: item.text,
         likeCount,
         childComment: [],
+        imageBase64Array,
       });
     }
 
     _commentArray.reverse();
+    // console.log({_commentArray})
     return _commentArray;
   }
 
@@ -182,7 +193,7 @@ const App = () => {
         ? `${comment.createdAt}`
         : `${comment.createdAt}|${comment.updatedAt}`}
       {`[${subFirst(comment.commentId, 8)}]`}
-      {`${comment.likeCount !== 0 ? ' Like:' + comment.likeCount : ''}`}
+      {`${comment.likeCount !== 0 ? ' 💖' + comment.likeCount : ''}`}
       <br />
       {`${comment.userName} [${subFirst(comment.userId, 10)}] `}
       <br />
@@ -192,9 +203,19 @@ const App = () => {
         : comment.replyToUserName === '' ? <>{`REPLY:${comment.replyToTextId}`}<br /></>
         : <>{`TO:${comment.replyToUserName} REPLY:${comment.replyToTextId}`}<br /></>
       }
-      {/* {comment.text} */}
-
       {comment.text.split(/(\n)/).map((v, i) => v === '\n' ? <br key={i} /> : v)}
+
+      {comment.imageBase64Array.length === 0 ? null :
+        <>
+          <br />
+          {comment.imageBase64Array.map(img => {
+            return (
+              // eslint-disable-next-line jsx-a11y/alt-text
+              <img src={img} />
+            );
+          })}
+        </>
+      }
 
     </>
   }
@@ -205,23 +226,6 @@ const App = () => {
       isUndefined(commentArray.find(c => c.commentId === comment._replyToTextId))
   });
 
-  // // 多段階のスレッド表示階層
-  // for (const item1 of viewCommentArray) {
-  //   item1.childComment = commentArray.filter(c => c._replyToTextId === item1.commentId)
-  //   for (const item2 of item1.childComment) {
-  //     item2.childComment = commentArray.filter(c => c._replyToTextId === item2.commentId)
-  //     for (const item3 of item2.childComment) {
-  //       item3.childComment = commentArray.filter(c => c._replyToTextId === item3.commentId)
-  //       for (const item4 of item3.childComment) {
-  //         item4.childComment = commentArray.filter(c => c._replyToTextId === item4.commentId)
-  //         for (const item5 of item4.childComment) {
-  //           item5.childComment = commentArray.filter(c => c._replyToTextId === item5.commentId)
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-  // console.log({viewCommentArray})
 
   const setChildComment = (targetCommentArray, level = 0) => {
     for (const item of targetCommentArray) {
