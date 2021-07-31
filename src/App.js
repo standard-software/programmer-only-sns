@@ -73,7 +73,7 @@ const App = () => {
     const likeData = await getFetchData('https://versatileapi.herokuapp.com/api/like/all/');
     // console.log({likeData})
 
-    const _commentArray = [];
+    let _commentArray = [];
     const commentData = await getFetchData(textAllURL)
     // console.log({commentData})
     for (const item of commentData) {
@@ -91,6 +91,7 @@ const App = () => {
         replyToTextId:
           isUndefined(item.in_reply_to_text_id) ? '' :
           subFirst(item.in_reply_to_text_id, 8),
+        _replyToTextId: item.in_reply_to_text_id,
         item: item,
         userId: item._user_id,
         createdAt: dateFormat(item._created_at),
@@ -98,10 +99,10 @@ const App = () => {
         commentId: item.id,
         text: item.text,
         likeCount,
+        childComment: [],
       });
     }
 
-    console.log({ _commentArray });
     _commentArray.reverse();
     return _commentArray;
   }
@@ -175,30 +176,104 @@ const App = () => {
     })();
   }, []);
 
+  const commentOutput = (comment) => {
+    return <>
+      {comment.createdAt === comment.updatedAt
+        ? `${comment.createdAt}`
+        : `${comment.createdAt}|${comment.updatedAt}`}
+      {`[${subFirst(comment.commentId, 8)}]`}
+      {`${comment.likeCount !== 0 ? ' Like:' + comment.likeCount : ''}`}
+      <br />
+      {`${comment.userName} [${subFirst(comment.userId, 10)}] `}
+      <br />
+      {
+        comment.replyToUserName === '' && comment.replyToTextId === '' ? null
+        : comment.replyToTextId === '' ? <>{`TO:${comment.replyToUserName}`}<br /></>
+        : comment.replyToUserName === '' ? <>{`REPLY:${comment.replyToTextId}`}<br /></>
+        : <>{`TO:${comment.replyToUserName} REPLY:${comment.replyToTextId}`}<br /></>
+      }
+      {comment.text}
+    </>
+  }
+
+  // ルートに表示されるものだけをフィルタしている
+  const viewCommentArray = commentArray.filter(comment => {
+    return (isUndefined(comment._replyToTextId)) ||
+      isUndefined(commentArray.find(c => c.commentId === comment._replyToTextId))
+  });
+
+  // 多段階のスレッド表示階層
+  for (const item1 of viewCommentArray) {
+    item1.childComment = commentArray.filter(c => c._replyToTextId === item1.commentId)
+    for (const item2 of item1.childComment) {
+      item2.childComment = commentArray.filter(c => c._replyToTextId === item2.commentId)
+      for (const item3 of item2.childComment) {
+        item3.childComment = commentArray.filter(c => c._replyToTextId === item3.commentId)
+        for (const item4 of item3.childComment) {
+          item4.childComment = commentArray.filter(c => c._replyToTextId === item4.commentId)
+          for (const item5 of item4.childComment) {
+            item5.childComment = commentArray.filter(c => c._replyToTextId === item5.commentId)
+          }
+        }
+      }
+    }
+  }
+  // console.log({viewCommentArray})
+
   return (
     <div className="App">
       <header className="App-header">
 
       <div>
-        {commentArray.map((comment, i) => {
+        {viewCommentArray.map((comment, i) => {
           // console.log(comment.userName);
           return (
             <div key={comment.commentId}>
-              {comment.createdAt === comment.updatedAt
-                ? `${comment.createdAt}`
-                : `${comment.createdAt}|${comment.updatedAt}`}
-              {`[${subFirst(comment.commentId, 8)}]`}
-              {`${comment.likeCount !== 0 ? ' Like:' + comment.likeCount : ''}`}
-              <br />
-              {`${comment.userName} [${subFirst(comment.userId, 10)}] `}
-              <br />
-              {
-                comment.replyToUserName === '' && comment.replyToTextId === '' ? null
-                : comment.replyToTextId === '' ? <>{`TO:${comment.replyToUserName}`}<br /></>
-                : comment.replyToUserName === '' ? <>{`REPLY:${comment.replyToTextId}`}<br /></>
-                : <>{`TO:${comment.replyToUserName} REPLY:${comment.replyToTextId}`}<br /></>
-              }
-              {comment.text}
+              {commentOutput(comment)}
+
+              {comment.childComment.map(comment => {
+                return (
+                  <div key={comment.commentId} style={{ marginLeft: '20px' }}>
+                    {commentOutput(comment)}
+
+                    {comment.childComment.map(comment => {
+                      return (
+                        <div key={comment.commentId} style={{ marginLeft: '40px' }}>
+                          {commentOutput(comment)}
+
+                          {comment.childComment.map(comment => {
+                            return (
+                              <div key={comment.commentId} style={{ marginLeft: '60px' }}>
+                                {commentOutput(comment)}
+
+                                {comment.childComment.map(comment => {
+                                  return (
+                                    <div key={comment.commentId} style={{ marginLeft: '80px' }}>
+                                      {commentOutput(comment)}
+
+                                      {comment.childComment.map(comment => {
+                                        return (
+                                          <div key={comment.commentId} style={{ marginLeft: '100px' }}>
+                                            {commentOutput(comment)}
+                                          </div>
+                                        )
+                                      })}
+
+
+                                    </div>
+                                  )
+                                })}
+
+                              </div>
+                            )
+                          })}
+
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })}
               <hr />
             </div>
           );
