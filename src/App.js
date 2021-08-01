@@ -204,21 +204,26 @@ const App = () => {
         : comment.replyToUserName === '' ? <>{`REPLY:${comment.replyToTextId}`}<br /></>
         : <>{`TO:${comment.replyToUserName} REPLY:${comment.replyToTextId}`}<br /></>
       }
+
       <div dangerouslySetInnerHTML={
         {
           __html: marked(
-            comment.text.replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+            comment.text.replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('\n', '  \n')
           )
         }
       } />
+      {/* {
+        comment.text
+        .split(/(\n)/).map((v, i) => v === '\n' ? <br key={i} /> : v)
+      } */}
 
       {comment.imageBase64Array.length === 0 ? null :
         <>
           <br />
-          {comment.imageBase64Array.map(img => {
+          {comment.imageBase64Array.map((img, imgIndex) => {
             return (
               // eslint-disable-next-line jsx-a11y/alt-text
-              <img src={img} />
+              <img key={imgIndex} src={img} />
             );
           })}
         </>
@@ -250,7 +255,7 @@ const App = () => {
       {
         targetCommentArray.map((comment, i) => {
           return (
-            <div key={comment.commentId} style={{ marginLeft: `${comment.level * 15}px` }}>
+            <div key={comment.commentId} style={{ marginLeft: `${30}px` }}>
                 {commentOutput(comment)}
                 <hr />
                 {1 <= comment.childComment.length ? outputChildComment( comment.childComment) : null}
