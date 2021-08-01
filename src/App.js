@@ -6,6 +6,21 @@ import parts, {
 } from "@standard-software/parts"
 const { subFirst, isFirst } = parts.string;
 
+const renderer = new marked.Renderer()
+renderer.link = (href, title, text) => {
+    const external = !/^\//.test(href);
+    const usePrefix = external && !/^http/.test(text);
+    const target = external ? ' target="_blank"' : '';
+    const prefix = usePrefix ? "<i class=\"fa fa-fw fa-external-link\"></i> " : '';
+    title = title ? ` title="${title}"` : '';
+    href= ` href="${href}"`
+
+    return `<a${href}${target}${title}>${prefix}${text}</a>`
+}
+marked.setOptions({
+  renderer
+})
+
 const dateFormat = (dateText) => {
   return dateToString(
     stringToDate(dateText, 'YYYY-MM-DDTHH:mm:ss.SSSZ'),
