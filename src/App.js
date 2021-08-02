@@ -6,6 +6,7 @@ import parts, {
 } from "@standard-software/parts"
 const { subFirst, isFirst } = parts.string;
 
+// marked.js support target_blank link
 const renderer = new marked.Renderer()
 renderer.link = (href, title, text) => {
     const external = !/^\//.test(href);
@@ -36,6 +37,40 @@ const getFetchData = async (url) => {
     result = data
   })
   return result;
+}
+
+const postFetchData = async (url, postData) => {
+  let result = await fetch(url, {
+    method: "POST",
+    mode: "cors",
+    cache: "no-cache",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "HelloWorld"
+    },
+    redirect: "follow",
+    referrerPolicy: "no-referrer",
+    body: JSON.stringify(postData)
+  });
+  return result.json();
+}
+
+const putFetchData = async (url, postData) => {
+  let result = await fetch(url, {
+    method: "PUT",
+    mode: "cors",
+    cache: "no-cache",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "LOVE"
+    },
+    redirect: "follow",
+    referrerPolicy: "strict-origin-when-cross-origin",
+    body: JSON.stringify(postData)
+  });
+  return result.json();
 }
 
 const complementUserId = (shortId, userArray) => {
@@ -145,38 +180,19 @@ const App = () => {
       postData.in_reply_to_text_id = replyTextId
     }
     // console.log({postData})
-    const response = await fetch('https://versatileapi.herokuapp.com/api/text', {
-      method: "POST",
-      mode: "cors",
-      cache: "no-cache",
-      credentials: "same-origin",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "HelloWorld"
-      },
-      redirect: "follow",
-      referrerPolicy: "no-referrer",
-      body: JSON.stringify(postData)
-    });
-    return response.json();
+    const response = await postFetchData(
+      'https://versatileapi.herokuapp.com/api/text',
+      postData,
+    );
+    return response;
   }
 
   const postUserName = async (name, description) => {
-    const response = await fetch('https://versatileapi.herokuapp.com/api/user/create_user', {
-      method: "POST",
-      mode: "cors",
-      cache: "no-cache",
-      credentials: "same-origin",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "HelloWorld"
-      },
-      redirect: "follow",
-      referrerPolicy: "no-referrer",
-      body: JSON.stringify({ name, description })
-    });
-
-    return response.json();
+    const response = postFetchData(
+      'https://versatileapi.herokuapp.com/api/user/create_user',
+      { name, description },
+    )
+    return response;
   }
 
   const reloadComment = () => {
@@ -209,7 +225,18 @@ const App = () => {
         ? `${comment.createdAt}`
         : `${comment.createdAt}|${comment.updatedAt}`}
       {`[${subFirst(comment.commentId, 8)}]`}
-      {`${comment.likeCount !== 0 ? ' 💖' + comment.likeCount : ''}`}
+      <span
+        onClick={async () => {
+          await putFetchData(
+            `https://versatileapi.herokuapp.com/api/like/${comment.commentId}`,
+            { like_count: comment.likeCount + 1 },
+          );
+          reloadComment();
+        }}
+        style={{ cursor: 'pointer' }}
+      >
+        {`${comment.likeCount !== 0 ? ' 💖' + comment.likeCount : ' ❤'}`}
+      </span>
       <br />
       {`${comment.userName} [${subFirst(comment.userId, 10)}] `}
       <br />
@@ -330,12 +357,11 @@ const App = () => {
           />
           <button onClick={async () => {
             if (inputText !== '') {
-              const postTextResult = await postText(
+              await postText(
                 inputText,
                 complementUserId(inputReplyUserId, userArray),
                 complementTextId(inputReplyTextId, commentArray)
               );
-              // console.log({postTextResult})
               setInputText('');
               setInputReplyUserId('');
               setInputReplyTextId('');
