@@ -39,7 +39,7 @@ const getFetchData = async (url) => {
   return result;
 }
 
-const postFetchData = async (url, postData) => {
+const postFetchData = async (url, postData, authorization) => {
   let result = await fetch(url, {
     method: "POST",
     mode: "cors",
@@ -47,7 +47,7 @@ const postFetchData = async (url, postData) => {
     credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
-      Authorization: "HelloWorld"
+      Authorization: authorization,
     },
     redirect: "follow",
     referrerPolicy: "no-referrer",
@@ -56,7 +56,7 @@ const postFetchData = async (url, postData) => {
   return result.json();
 }
 
-const putFetchData = async (url, postData) => {
+const putFetchData = async (url, postData, authorization) => {
   let result = await fetch(url, {
     method: "PUT",
     mode: "cors",
@@ -64,7 +64,7 @@ const putFetchData = async (url, postData) => {
     credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
-      Authorization: "LOVE"
+      Authorization: authorization,
     },
     redirect: "follow",
     referrerPolicy: "strict-origin-when-cross-origin",
@@ -112,7 +112,7 @@ const App = () => {
     const _blockUserIds = localStorage.getItem('posns_block_user_ids');
 
     const textAllURL =
-      'https://versatileapi.herokuapp.com/api/text/all/?$orderby=_created_at desc&$limit=5000' +
+      'https://versatileapi.herokuapp.com/api/text/all/?$orderby=_created_at desc&$limit=100' +
       (
         isNull(_blockUserIds) ? ''
         : `&$filter=_user_id ne ` +
@@ -183,6 +183,7 @@ const App = () => {
     const response = await postFetchData(
       'https://versatileapi.herokuapp.com/api/text',
       postData,
+      "HelloWorld",
     );
     return response;
   }
@@ -191,6 +192,7 @@ const App = () => {
     const response = postFetchData(
       'https://versatileapi.herokuapp.com/api/user/create_user',
       { name, description },
+      "HelloWorld",
     )
     return response;
   }
@@ -230,12 +232,27 @@ const App = () => {
           await putFetchData(
             `https://versatileapi.herokuapp.com/api/like/${comment.commentId}`,
             { like_count: comment.likeCount + 1 },
+            'LOVE',
           );
           reloadComment();
         }}
         style={{ cursor: 'pointer' }}
       >
-        {`${comment.likeCount !== 0 ? ' 💖' + comment.likeCount : ' ❤'}`}
+        {`${comment.likeCount !== 0 ? ' 👍' : ' 👍'}`}
+      </span>
+      {comment.likeCount === 0 ? '' : `💖${comment.likeCount}`}
+      <span
+        onClick={async () => {
+          await putFetchData(
+            `https://versatileapi.herokuapp.com/api/like/${comment.commentId}`,
+            { like_count: comment.likeCount - 1 },
+            'LOVE',
+          );
+          reloadComment();
+        }}
+        style={{ cursor: 'pointer' }}
+      >
+        {`${comment.likeCount !== 0 ? ' 👎' : ''}`}
       </span>
       <br />
       {`${comment.userName} [${subFirst(comment.userId, 10)}] `}
