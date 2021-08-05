@@ -104,6 +104,8 @@ const App = () => {
   const [inputUserDescription, setInputUserDescription] = useState('');
   const [inputReplyUserId, setInputReplyUserId] = useState('');
   const [inputReplyTextId, setInputReplyTextId] = useState('');
+  const [limit, setLimit] = useState(1000);
+  const [skip, setSkip] = useState(0);
 
   const getCommentArray = async () => {
     const userData = await getFetchData('https://versatileapi.herokuapp.com/api/user/all/');
@@ -111,8 +113,14 @@ const App = () => {
 
     const _blockUserIds = localStorage.getItem('posns_block_user_ids');
 
-    const textAllURL =
-      'https://versatileapi.herokuapp.com/api/text/all/?$orderby=_created_at desc&$limit=100' +
+    const textAllURL = (limit=100, skip=0) => {
+      return 'https://versatileapi.herokuapp.com/api/text/all/?$orderby=_created_at desc' +
+      (limit === 0 ? '' :
+        `&$limit=${limit}`
+      ) +
+      (skip === 0 ? '' :
+        `&$skip=${skip}`
+      ) +
       (
         isNull(_blockUserIds) ? ''
         : `&$filter=_user_id ne ` +
@@ -120,6 +128,7 @@ const App = () => {
           .map(v=>`'${complementUserId(v, userData)}'`)
           .join(' and _user_id ne ')
       )
+    }
 
     const likeData = await getFetchData(
       'https://versatileapi.herokuapp.com/api/like/all/'
@@ -132,7 +141,7 @@ const App = () => {
     // console.log({imageData})
 
     let _commentArray = [];
-    const commentData = await getFetchData(textAllURL)
+    const commentData = await getFetchData(textAllURL(limit))
     // console.log({commentData})
     for (const item of commentData) {
       let likeCount = sum(likeData.filter(like => like.id === item.id).map(v => v.like_count))
@@ -197,12 +206,6 @@ const App = () => {
     return response;
   }
 
-  const reloadComment = () => {
-    (async () => {
-      setCommentArray(await getCommentArray());
-    })();
-  }
-
   // ページロード時のデータ読み込み処理
   useEffect(() => {
     (async () => {
@@ -215,6 +218,11 @@ const App = () => {
         name: initialValue(localStorage.getItem('posns_username'), '', [null]),
         description: initialValue(localStorage.getItem('posns_userdesc'), '', [null]),
       }
+
+      var element = document.documentElement;
+      var bottom = element.scrollHeight - element.clientHeight;
+      window.scroll(0, bottom);
+
       // console.log({myUserItem})
       setInputUserName(myUserItem.name);
       setInputUserDescription(myUserItem.description)
@@ -234,7 +242,7 @@ const App = () => {
             { like_count: comment.likeCount + 1 },
             'LOVE',
           );
-          reloadComment();
+          setCommentArray(await getCommentArray());
         }}
         style={{ cursor: 'pointer' }}
       >
@@ -248,7 +256,7 @@ const App = () => {
             { like_count: comment.likeCount - 1 },
             'LOVE',
           );
-          reloadComment();
+          setCommentArray(await getCommentArray());
         }}
         style={{ cursor: 'pointer' }}
       >
@@ -333,7 +341,23 @@ const App = () => {
       <div>
         {outputChildComment(viewCommentArray)}
 
-        <div>
+        <div
+          style={{
+            minHeight: '130px'
+          }}
+        >
+        </div>
+
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '0',
+            backgroundColor: 'white',
+            paddingLeft: '30px',
+            paddingTop: '30px',
+            paddingBottom: '30px',
+          }}
+        >
           <input type="text" value={inputUserName}
             onChange={(e) => {
               setInputUserName(e.target.value);
@@ -350,7 +374,7 @@ const App = () => {
             await postUserName(inputUserName, inputUserDescription);
             localStorage.setItem('posns_username', inputUserName);
             localStorage.setItem('posns_userdesc', inputUserDescription);
-            reloadComment()
+            setCommentArray(await getCommentArray());
           }}>ユーザー名設定</button>
           <br />
           <input type="text" value={inputReplyUserId}
@@ -373,6 +397,14 @@ const App = () => {
             placeholder='投稿内容'
           />
           <button onClick={async () => {
+            let scrollFlag = false;
+
+            if (inputText !== '') {
+              if (inputReplyTextId === '') {
+                scrollFlag = true;
+              }
+            }
+
             if (inputText !== '') {
               await postText(
                 inputText,
@@ -384,8 +416,15 @@ const App = () => {
               setInputReplyTextId('');
               // console.log('postText', inputText)
             }
-            // console.log('onClick before reloadComment', inputText)
-            reloadComment()
+
+            setCommentArray(await getCommentArray());
+
+            if (scrollFlag) {
+              var element = document.documentElement;
+              var bottom = element.scrollHeight - element.clientHeight;
+              window.scroll(0, bottom);
+            }
+
           }}>書き込み/表示更新</button>
           <br />
         </div>
